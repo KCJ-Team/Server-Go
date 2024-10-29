@@ -25,4 +25,4 @@ steps:
       - 'ssh'
       - '${_VM_NAME}'
       - '--zone=${_VM_ZONE}'
-      - '--command=docker pull ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest; docker stop server-go || true; docker rm server-go || true; docker run -d -p ${_PORT}:${_PORT} --name server-go ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
+      - '--command=gcloud auth configure-docker ${_REGION}-docker.pkg.dev && docker pull ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest && docker stop server-go || true && docker rm server-go || true && docker run -d -p ${_PORT}:${_PORT} --name server-go ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'

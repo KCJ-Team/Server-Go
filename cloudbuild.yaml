@@ -12,17 +12,17 @@ steps:
       - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
       - '.'
 
-  # 2. Artifact Registry에 Docker 이미지 푸시
+  # 2. Docker 이미지 푸시
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
       - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
 
-  # 3. GCP VM에 배포
+  # 3. 배포
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'compute'
       - 'ssh'
       - '${_VM_NAME}'
       - '--zone=${_VM_ZONE}'
-       - '--command=docker pull ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest; docker stop server-go || true; docker rm server-go || true; docker run -d -p ${_PORT}:${_PORT} --name server-go ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
+      - '--command=docker pull ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest; docker stop server-go || true; docker rm server-go || true; docker run -d -p ${_PORT}:${_PORT} --name server-go ${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'

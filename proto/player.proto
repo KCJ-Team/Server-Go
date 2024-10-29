@@ -1,0 +1,25 @@
+// player.proto
+
+syntax = "proto3";
+
+package player;
+
+option go_package = "server-go/src/player/pb";
+
+// 서비스 인터페이스 정의
+service PlayerService {
+    // 클라이언트에서 서버로 플레이어의 위치를 전송
+    rpc SendPlayerPosition (RequestPlayerPosition) returns (Response); // stream이 붙으면 다중
+}
+
+// 리퀘스트 메세지 데이터 구조
+message RequestPlayerPosition {
+    string player_id = 1;  // 플레이어의 고유 ID
+    float x = 2;           // X 좌표
+    float y = 3;           // Y 좌표
+    float z = 4;           // Z 좌표
+}
+
+message Response {
+    string message = 1;    // 클라이언트로 응답할 메시지
+}

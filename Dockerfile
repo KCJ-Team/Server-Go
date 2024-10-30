@@ -10,10 +10,9 @@ RUN go mod download
 
 # 소스 코드 복사 및 빌드
 COPY . .
+
+# 애플리케이션 빌드
 RUN go build -o server .
 
-# 컨테이너 실행 시 gRPC 서버 실행
+# 컨테이너 시작 시 실행될 기본 명령
 CMD ["./server"]
-
-# 외부 노출 포트 지정
-EXPOSE 50051

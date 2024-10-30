@@ -1,28 +1,29 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
-	"server-go/src/player"
-	"server-go/src/player/pb"
+)
 
-	"google.golang.org/grpc"
+// 프로토콜과 포트를 상수로 정의 => 나중에 환경변수로 설정...
+const (
+	protocol = "tcp"
+	port     = "8888"
 )
 
 func main() {
-	lis, err := net.Listen("tcp", ":50051")
+	// 서버 주소를 형식화
+	address := fmt.Sprintf(":%s", port)
+
+	// TCP 서버 설정
+	listener, err := net.Listen(protocol, address)
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		log.Fatalf("Failed to listen on %s:%s: %v", protocol, port, err)
 	}
+	defer listener.Close()
 
-	// TLS 설정 적용된 gRPC 서버 생성
-	grpcServer := grpc.NewServer()
+	log.Printf("Server is listening on %s:%s...", protocol, port)
 
-	// gRPC 서비스 등록
-	pb.RegisterPlayerServiceServer(grpcServer, &player.Server{})
-
-	log.Println("Starting secure gRPC server on port 50051 with TLS...")
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
-	}
+	StartConnection(listener) // 서버 시작
 }

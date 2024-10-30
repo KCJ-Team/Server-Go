@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package pathinfo;
+
+option go_package = "server-go/src/pb";
+
+message NavV3 {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+message PathTest {
+  repeated NavV3 paths = 1;
+}

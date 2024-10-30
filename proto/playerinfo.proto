@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package playerinfo;
+
+option go_package = "server-go/src/pb";
+
+// 요청, 응답
+message PlayerPosition {
+    string player_id = 1;  // 플레이어의 고유 ID
+    float x = 2;           // X 좌표
+    float y = 3;           // Y 좌표
+    float z = 4;           // Z 좌표
+    float speed = 8;
+}
+
+message SpawnMyPlayer {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+message SpawnOtherPlayer {
+  string playerId = 1;
+  float x = 2;
+  float y = 3;
+  float z = 4;
+}

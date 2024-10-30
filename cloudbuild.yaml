@@ -11,6 +11,8 @@ steps:
       - '-t'
       - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest'
       - '.'
+    env:
+      - 'MYSQL_DSN=${_MYSQL_DSN}'
 
   # 2. Docker 이미지 푸시
   - name: 'gcr.io/cloud-builders/docker'

@@ -58,8 +58,20 @@ func handleConnection(conn net.Conn) {
 }
 
 // processMessage: 수신한 메시지의 유형을 식별하고 해당 엔티티로 전송
+// 전송 모델을 먼저 본다음, MessageType을 보고 나눈다.
 func processMessage(message *pb.GameMessage, conn net.Conn) {
 	switch msg := message.Message.(type) {
+	case *pb.GameMessage_PlayerRequest:
+		playerRequest := msg.PlayerRequest
+
+		// MessageType에 따라 추가적인 분리
+		switch message.MessageType {
+		case pb.MessageType_SESSION_LOGIN:
+			mg.GetPlayerManager().Login(playerRequest.PlayerId, &conn)
+		case pb.MessageType_SESSION_LOGOUT:
+			mg.GetPlayerManager().Logout(playerRequest.PlayerId, &conn)
+		}
+
 	case *pb.GameMessage_PlayerPosition:
 		mg.GetPlayerManager().PlayerPosition(msg)
 	default:

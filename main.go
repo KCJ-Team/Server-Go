@@ -19,6 +19,7 @@ const (
 var DB *gorm.DB // 전역 변수로 DB 인스턴스 선언
 
 func main() {
+	// ** 아래 DB 연결 코드는 일단 놔둡니다 **
 	// 환경변수에서 DSN 가져오기
 	dsn := os.Getenv("MYSQL_DSN")
 	if dsn == "" {
@@ -30,10 +31,9 @@ func main() {
 
 	fmt.Println("Database connected successfully")
 
-	// 서버 주소를 형식화
+	// TCP 서버
 	address := fmt.Sprintf(":%s", port)
 
-	// TCP 서버 설정
 	listener, err := net.Listen(protocol, address)
 	if err != nil {
 		log.Fatalf("Failed to listen on %s:%s: %v", protocol, port, err)

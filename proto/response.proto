@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package messages;
+
+option go_package = "server-go/src/pb";
+
+enum ResponseCode {
+    SUCCESS = 0;
+    ERROR = 1;
+    BAD_REQUEST = 2;
+    NOT_FOUND = 3;
+    CONFLICT = 4;
+}
+
+message Response {
+    ResponseCode code = 1; // 응답 코드
+    string message = 2; // 응답 메세지
+}

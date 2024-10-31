@@ -1,25 +1,21 @@
 package manager
 
 import (
-	"encoding/binary"
+	"errors"
 	"fmt"
 	"log"
 
 	pb "server-go/src/pb"
 
 	"net"
-
-	"google.golang.org/protobuf/proto"
 )
 
 // playerManager 전역 변수로 PlayerManager 싱글톤 패턴 구현
 var playerManager *PlayerManager
 
 // Player: 개별 플레이어의 정보를 담는 구조체
-type Player struct {
-	ID   int       // 플레이어 고유 ID
-	Name string    // 플레이어 이름
-	Age  int       // 플레이어 나이
+type Player struct { // DB에는 기본복수형으로 players 라는 테이블로 매핑이된다.
+	ID   string    // guid
 	Conn *net.Conn // 플레이어의 네트워크 연결
 	X    float32   // 플레이어의 X 좌표
 	Y    float32   // 플레이어의 Y 좌표
@@ -29,7 +25,7 @@ type Player struct {
 // PlayerManager: 플레이어 목록을 관리하고, ID를 자동 할당하는 구조체
 type PlayerManager struct {
 	players map[string]*Player // 플레이어 이름을 키로 하여 Player 포인터를 저장하는 맵
-	nextID  int                // 새로운 플레이어 ID를 생성할 때 사용
+	// nextID  int                // 새로운 플레이어 ID를 생성할 때 사용
 }
 
 // GetPlayerManager: 싱글톤 패턴으로 PlayerManager를 생성 및 반환
@@ -37,10 +33,71 @@ func GetPlayerManager() *PlayerManager {
 	if playerManager == nil {
 		playerManager = &PlayerManager{
 			players: make(map[string]*Player),
-			nextID:  1,
 		}
 	}
 	return playerManager
+}
+
+// Login: playerId로 로그인 요청을 처리
+func (pm *PlayerManager) Login(playerId string, conn *net.Conn) *Player {
+	// 세션에 playerId가 존재하는지 확인하고, 있으면 기존 플레이어 반환
+	player, err := pm.GetPlayerInSession(playerId)
+	if err == nil {
+		player.Conn = conn // 기존 연결을 새로운 conn으로 업데이트
+		log.Printf("Existing player connection updated for ID: %s", playerId)
+
+		// 이미 존재한다는 패킷응답을 보내야한다.
+		GetNetworkManager().SendResponseMessage(conn, Conflict, "Player already logged in")
+
+		return player
+	}
+
+	// playerId가 세션에 없다면 새로운 플레이어 생성 및 세션에 추가
+	newPlayer := &Player{
+		ID:   playerId,
+		Conn: conn,
+	}
+
+	pm.players[playerId] = newPlayer // 세션 맵에 새 플레이어 추가
+	log.Printf("New player added to session with ID: %s", playerId)
+
+	// 임시 로그 확인
+	pm.ListPlayers()
+
+	// 응답 전송
+	GetNetworkManager().SendResponseMessage(conn, Success, fmt.Sprintf("Login successful! ID: %s", playerId))
+
+	return newPlayer
+}
+
+// Logout: playerId로 로그아웃 요청을 처리하여 세션에서 제거
+func (pm *PlayerManager) Logout(playerId string, conn *net.Conn) error {
+	// 세션에서 playerId에 해당하는 플레이어가 존재하는지 확인
+	_, exists := pm.players[playerId]
+	if !exists {
+		return errors.New("player not found in session")
+	}
+
+	// 세션 맵에서 플레이어를 제거
+	delete(pm.players, playerId)
+	log.Printf("Player removed from session with ID: %s", playerId)
+
+	// 임시 로그 확인
+	pm.ListPlayers()
+
+	// 응답 전송
+	GetNetworkManager().SendResponseMessage(conn, Success, fmt.Sprintf("Logout successful! ID: %s", playerId))
+
+	return nil
+}
+
+// GetPlayerInSession: 세션에서 playerId로 플레이어 정보 조회
+func (pm *PlayerManager) GetPlayerInSession(playerId string) (*Player, error) {
+	player, exists := pm.players[playerId]
+	if !exists {
+		return nil, errors.New("player not found in session")
+	}
+	return player, nil
 }
 
 func (pm *PlayerManager) PlayerPosition(p *pb.GameMessage_PlayerPosition) {
@@ -145,40 +202,31 @@ func (pm *PlayerManager) PlayerPosition(p *pb.GameMessage_PlayerPosition) {
 // }
 
 // MovePlayer: 플레이어의 위치를 업데이트하고 다른 플레이어들에게 위치 변경 알림
-func (pm *PlayerManager) MovePlayer(p *pb.GameMessage_PlayerPosition) {
-	// 해당 플레이어의 좌표 업데이트
-	pm.players[p.PlayerPosition.PlayerId].X = p.PlayerPosition.X
-	pm.players[p.PlayerPosition.PlayerId].Y = p.PlayerPosition.Y
-	pm.players[p.PlayerPosition.PlayerId].Z = p.PlayerPosition.Z
+// func (pm *PlayerManager) MovePlayer(p *pb.GameMessage_PlayerPosition) {
+// 	// 해당 플레이어의 좌표 업데이트
+// 	pm.players[p.PlayerPosition.PlayerId].X = p.PlayerPosition.X
+// 	pm.players[p.PlayerPosition.PlayerId].Y = p.PlayerPosition.Y
+// 	pm.players[p.PlayerPosition.PlayerId].Z = p.PlayerPosition.Z
 
-	// 위치 변경 메시지 생성
-	response, err := proto.Marshal(&pb.GameMessage{
-		Message: p,
-	})
-	if err != nil {
-		log.Printf("Failed to marshal response: %v", err)
-		return
-	}
-
-	// 위치 변경 메시지를 모든 플레이어에게 전송 (자기 자신 제외)
-	for _, player := range pm.players {
-		if player.Name == p.PlayerPosition.PlayerId {
-			continue
-		}
-		lengthBuf := make([]byte, 4)
-		binary.LittleEndian.PutUint32(lengthBuf, uint32(len(response)))
-		lengthBuf = append(lengthBuf, response...)
-		(*player.Conn).Write(lengthBuf)
-	}
-}
-
-// // GetPlayer: ID로 플레이어 정보를 조회
-// func (pm *PlayerManager) GetPlayer(id string) (*Player, error) {
-// 	player, exists := pm.players[id]
-// 	if !exists {
-// 		return nil, errors.New("player not found")
+// 	// 위치 변경 메시지 생성
+// 	response, err := proto.Marshal(&pb.GameMessage{
+// 		Message: p,
+// 	})
+// 	if err != nil {
+// 		log.Printf("Failed to marshal response: %v", err)
+// 		return
 // 	}
-// 	return player, nil
+
+// 	// 위치 변경 메시지를 모든 플레이어에게 전송 (자기 자신 제외)
+// 	for _, player := range pm.players {
+// 		if player.Name == p.PlayerPosition.PlayerId {
+// 			continue
+// 		}
+// 		lengthBuf := make([]byte, 4)
+// 		binary.LittleEndian.PutUint32(lengthBuf, uint32(len(response)))
+// 		lengthBuf = append(lengthBuf, response...)
+// 		(*player.Conn).Write(lengthBuf)
+// 	}
 // }
 
 // // RemovePlayer: 플레이어를 ID로 제거하고, 다른 플레이어들에게 알림
@@ -206,11 +254,13 @@ func (pm *PlayerManager) MovePlayer(p *pb.GameMessage_PlayerPosition) {
 // 	return nil
 // }
 
-// // ListPlayers: 현재 접속 중인 모든 플레이어 리스트 반환
-// func (pm *PlayerManager) ListPlayers() []*Player {
-// 	playerList := []*Player{}
-// 	for _, player := range pm.players {
-// 		playerList = append(playerList, player)
-// 	}
-// 	return playerList
-// }
+// ListPlayers: 현재 접속 중인 모든 플레이어 리스트 반환
+func (pm *PlayerManager) ListPlayers() []*Player {
+	playerList := []*Player{}
+	for _, player := range pm.players {
+		playerList = append(playerList, player)
+		log.Printf("Player ID: %s, Connection: %v", player.ID, player.Conn != nil)
+	}
+	log.Printf("Total connected players: %d", len(playerList))
+	return playerList
+}

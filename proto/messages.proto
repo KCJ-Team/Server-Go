@@ -5,12 +5,23 @@ package messages;
 option go_package = "server-go/src/pb";
 
 import "playerinfo.proto";
-import "chat.proto";
 import "pathinfo.proto";
+import "response.proto";
+
+// 메시지 타입을 정의
+enum MessageType {
+    SESSION_LOGIN = 0; // 세션 로그인 요청
+    SESSION_LOGOUT = 1; // 세션 로그아웃 요청
+    PLAYER_QUERY = 2;     // 플레이어 정보 조회 요청
+    PLAYER_POSITION_UPDATE = 3; // 플레이어 위치 업데이트 요청
+}
 
 message GameMessage {
+    MessageType messageType = 1;
+    // 다양한 메시지 유형을 포함하는 oneof 필드
     oneof message {
-        playerinfo.PlayerPosition player_position = 1;
-        chat.ChatMessage chat = 2;
+        playerinfo.PlayerRequest playerRequest = 2;
+        messages.Response response = 3;
+        playerinfo.PlayerPosition playerPosition = 4;
     }
 }

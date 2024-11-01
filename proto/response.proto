@@ -4,6 +4,8 @@ package messages;
 
 option go_package = "server-go/src/pb";
 
+import "roomInfo.proto";
+
 enum ResponseCode {
     SUCCESS = 0;
     ERROR = 1;
@@ -15,4 +17,8 @@ enum ResponseCode {
 message Response {
     ResponseCode code = 1; // 응답 코드
     string message = 2; // 응답 메세지
+
+    oneof data { // 응답할 데이터 모델들
+        roomInfo.RoomInfo roomInfo = 3;
+    }
 }

@@ -61,19 +61,20 @@ func handleConnection(conn net.Conn) {
 // 전송 모델을 먼저 본다음, MessageType을 보고 나눈다.
 func processMessage(message *pb.GameMessage, conn net.Conn) {
 	switch msg := message.Message.(type) {
-	case *pb.GameMessage_PlayerRequest:
-		playerRequest := msg.PlayerRequest
+	case *pb.GameMessage_PlayerInfo:
+		playerInfo := msg.PlayerInfo
 
 		// MessageType에 따라 추가적인 분리
 		switch message.MessageType {
 		case pb.MessageType_SESSION_LOGIN:
-			mg.GetPlayerManager().Login(playerRequest.PlayerId, &conn)
+			mg.GetPlayerManager().Login(playerInfo.PlayerId, &conn)
 		case pb.MessageType_SESSION_LOGOUT:
-			mg.GetPlayerManager().Logout(playerRequest.PlayerId, &conn)
+			mg.GetPlayerManager().Logout(playerInfo.PlayerId, &conn)
+		case pb.MessageType_MATCHMAKING_START:
+			mg.GetMatchmakingManager().StartMatchmaking(playerInfo.PlayerId, &conn)
+		case pb.MessageType_MATCHMAKING_CANCEL:
+			mg.GetMatchmakingManager().CancelMatchmaking(playerInfo.PlayerId)
 		}
-
-	case *pb.GameMessage_PlayerPosition:
-		mg.GetPlayerManager().PlayerPosition(msg)
 	default:
 		log.Printf("Unexpected message type: %T", msg)
 	}

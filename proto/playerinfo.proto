@@ -1,19 +1,18 @@
 syntax = "proto3";
 
-package playerinfo;
+package playerInfo;
 
 option go_package = "server-go/src/pb";
 
-// 클라에서 요청시 사용할 플레이어 필드
-message PlayerRequest {
-  string playerId = 1;
-}
-
-// 요청, 응답으로 사용할 위치 정보
-message PlayerPosition {
+// 요청, 응답으로 사용할 플레이어의 정보
+message PlayerInfo {
     string playerId = 1;  // 플레이어의 고유 ID
     float x = 2;          // X 좌표
     float y = 3;          // Y 좌표
     float z = 4;          // Z 좌표
-    float speed = 5;      // 플레이어 속도
+    float rx = 5; // X 축 회전
+    float ry = 6; // Y 축 회전
+    float rz = 7; // Z 축 회전
+    float speed = 8;      // 플레이어 속도
+    float health = 9; // 플레이어 체력
 }

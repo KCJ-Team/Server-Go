@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package roomInfo;
+
+option go_package = "server-go/src/pb";
+
+import "playerInfo.proto"; // PlayerState 메시지를 가져오기 위한 임포트
+
+// 룸 정보 메시지
+message RoomInfo {
+    string roomId = 1;  // 룸 ID. 참여하는 playerId들이 붙어있음
+    playerInfo.PlayerInfo player1Info = 2; // 첫 번째 플레이어 상태
+    playerInfo.PlayerInfo player2Info = 3; // 두 번째 플레이어 상태
+}

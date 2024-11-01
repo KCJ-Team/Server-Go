@@ -4,8 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
-
-	pb "server-go/src/pb"
+	"server-go/src/pb"
 
 	"net"
 )
@@ -15,11 +14,16 @@ var playerManager *PlayerManager
 
 // Player: 개별 플레이어의 정보를 담는 구조체
 type Player struct { // DB에는 기본복수형으로 players 라는 테이블로 매핑이된다.
-	ID   string    // guid
-	Conn *net.Conn // 플레이어의 네트워크 연결
-	X    float32   // 플레이어의 X 좌표
-	Y    float32   // 플레이어의 Y 좌표
-	Z    float32   // 플레이어의 Z 좌표
+	playerId string    // guid
+	conn     *net.Conn // 플레이어의 네트워크 연결
+	x        float32   // 플레이어의 X 좌표
+	y        float32   // 플레이어의 Y 좌표
+	z        float32   // 플레이어의 Z 좌표
+	rx       float32   // X 축 회전
+	ry       float32   // Y 축 회전
+	rz       float32   // Z 축 회전
+	speed    float32   // 이동 속도
+	health   float32   // 체력
 }
 
 // PlayerManager: 플레이어 목록을 관리하고, ID를 자동 할당하는 구조체
@@ -43,29 +47,29 @@ func (pm *PlayerManager) Login(playerId string, conn *net.Conn) *Player {
 	// 세션에 playerId가 존재하는지 확인하고, 있으면 기존 플레이어 반환
 	player, err := pm.GetPlayerInSession(playerId)
 	if err == nil {
-		player.Conn = conn // 기존 연결을 새로운 conn으로 업데이트
+		player.conn = conn // 기존 연결을 새로운 conn으로 업데이트
 		log.Printf("Existing player connection updated for ID: %s", playerId)
 
 		// 이미 존재한다는 패킷응답을 보내야한다.
-		GetNetworkManager().SendResponseMessage(conn, Conflict, "Player already logged in")
+		GetNetworkManager().SendResponseMessage(pb.MessageType_SESSION_LOGIN, conn, Conflict, "Player already logged in")
 
 		return player
 	}
 
 	// playerId가 세션에 없다면 새로운 플레이어 생성 및 세션에 추가
 	newPlayer := &Player{
-		ID:   playerId,
-		Conn: conn,
+		playerId: playerId,
+		conn:     conn,
 	}
 
 	pm.players[playerId] = newPlayer // 세션 맵에 새 플레이어 추가
 	log.Printf("New player added to session with ID: %s", playerId)
 
 	// 임시 로그 확인
-	pm.ListPlayers()
+	pm.PrintPlayerList()
 
 	// 응답 전송
-	GetNetworkManager().SendResponseMessage(conn, Success, fmt.Sprintf("Login successful! ID: %s", playerId))
+	GetNetworkManager().SendResponseMessage(pb.MessageType_SESSION_LOGIN, conn, Success, fmt.Sprintf("Login successful! ID: %s", playerId))
 
 	return newPlayer
 }
@@ -78,15 +82,17 @@ func (pm *PlayerManager) Logout(playerId string, conn *net.Conn) error {
 		return errors.New("player not found in session")
 	}
 
+	// TODO : 플레이어가 멀티게임중이라면, 룸에서도 나가도록 처리해야함
+
 	// 세션 맵에서 플레이어를 제거
 	delete(pm.players, playerId)
 	log.Printf("Player removed from session with ID: %s", playerId)
 
 	// 임시 로그 확인
-	pm.ListPlayers()
+	pm.PrintPlayerList()
 
 	// 응답 전송
-	GetNetworkManager().SendResponseMessage(conn, Success, fmt.Sprintf("Logout successful! ID: %s", playerId))
+	GetNetworkManager().SendResponseMessage(pb.MessageType_SESSION_LOGOUT, conn, Success, fmt.Sprintf("Logout successful! ID: %s", playerId))
 
 	return nil
 }
@@ -100,9 +106,9 @@ func (pm *PlayerManager) GetPlayerInSession(playerId string) (*Player, error) {
 	return player, nil
 }
 
-func (pm *PlayerManager) PlayerPosition(p *pb.GameMessage_PlayerPosition) {
-	fmt.Printf("Received Player Position: PlayerID=%s, X=%f, Y=%f, Z=%f\n", p.PlayerPosition.PlayerId, p.PlayerPosition.X, p.PlayerPosition.Y, p.PlayerPosition.Z)
-}
+// func (pm *PlayerManager) PlayerPosition(p *pb.GameMessage_PlayerPosition) {
+// 	fmt.Printf("Received Player Position: PlayerID=%s, X=%f, Y=%f, Z=%f\n", p.PlayerPosition.PlayerId, p.PlayerPosition.X, p.PlayerPosition.Y, p.PlayerPosition.Z)
+// }
 
 // // AddPlayer: 새로운 플레이어를 추가하는 함수
 // //	플레이어의 기본 좌표 설정과 자기 자신 및 다른 플레이어들에게 입장 알림을 보냄
@@ -254,12 +260,12 @@ func (pm *PlayerManager) PlayerPosition(p *pb.GameMessage_PlayerPosition) {
 // 	return nil
 // }
 
-// ListPlayers: 현재 접속 중인 모든 플레이어 리스트 반환
-func (pm *PlayerManager) ListPlayers() []*Player {
+// GetPlayerList: 현재 접속 중인 모든 플레이어 리스트 반환
+func (pm *PlayerManager) PrintPlayerList() []*Player {
 	playerList := []*Player{}
 	for _, player := range pm.players {
 		playerList = append(playerList, player)
-		log.Printf("Player ID: %s, Connection: %v", player.ID, player.Conn != nil)
+		log.Printf("Player ID: %s, Connection: %v", player.playerId, player.conn != nil)
 	}
 	log.Printf("Total connected players: %d", len(playerList))
 	return playerList

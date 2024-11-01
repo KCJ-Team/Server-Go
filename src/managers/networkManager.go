@@ -7,6 +7,7 @@ import (
 
 	pb "server-go/src/pb" // 프로토버퍼 메시지 패키지
 
+	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -16,7 +17,6 @@ type ResponseCode int32
 const (
 	Success ResponseCode = iota // 0 성공
 	Error                       // 1 일반 오류
-
 	// 상세 오류
 	BadRequest // 2 잘못된 요청
 	NotFound   // 3 서버에서 찾을 수 없음
@@ -42,32 +42,30 @@ func GetNetworkManager() *NetworkManager {
 }
 
 // SendResponseMessage: 응답 메시지를 생성하고 클라이언트에게 전송하는 함수
-func (nm *NetworkManager) SendResponseMessage(conn *net.Conn, code ResponseCode, message string) error {
-	// 응답 메시지 생성
-	response := nm.CreateResponseMessage(code, message)
+func (nm *NetworkManager) SendResponseMessage(messageType pb.MessageType, conn *net.Conn, code ResponseCode, message string) error {
+	// 기본 응답 메시지 생성
+	builder := NewResponseBuilder(messageType, pb.ResponseCode(code), message)
+	response := builder.Build()
+
+	// 직렬화된 텍스트 메시지 확인용 로그 추가
+	log.Printf("Generated Response: %s", prototext.Format(response))
 
 	// 메시지 전송
-	err := nm.SendPacketToClient(conn, response)
-	if err != nil {
-		log.Printf("Failed to send response to client (%s): %v", (*conn).RemoteAddr(), err)
-		return err
-	}
-
-	log.Printf("Response sent to client at %s with code %d and message: %s", (*conn).RemoteAddr(), code, message)
-	return nil
+	return nm.SendPacketToClient(conn, response)
 }
 
-// CreateResponseMessage: BasicResponse를 GameMessage 형태로 변환하는 함수
-func (nm *NetworkManager) CreateResponseMessage(code ResponseCode, message string) *pb.GameMessage {
-	return &pb.GameMessage{
-		Message: &pb.GameMessage_Response{
-			Response: &pb.Response{
-				Code:    pb.ResponseCode(code),
-				Message: message,
-			},
-		},
-	}
-}
+// // CreateResponseMessage: BasicResponse를 GameMessage 형태로 변환하는 함수
+// func (nm *NetworkManager) CreateResponseMessage(messageType pb.MessageType, code ResponseCode, message string) *pb.GameMessage {
+// 	return &pb.GameMessage{
+// 		MessageType: messageType, // 메세지 타입
+// 		Message: &pb.GameMessage_Response{
+// 			Response: &pb.Response{
+// 				Code:    pb.ResponseCode(code),
+// 				Message: message,
+// 			},
+// 		},
+// 	}
+// }
 
 // SendPacketToClient: 클라이언트에게 메시지를 전송하는 함수
 func (nm *NetworkManager) SendPacketToClient(conn *net.Conn, message proto.Message) error {
@@ -82,13 +80,35 @@ func (nm *NetworkManager) SendPacketToClient(conn *net.Conn, message proto.Messa
 		return err
 	}
 
-	log.Printf("Packet successfully sent to client at %s", (*conn).RemoteAddr())
-	log.Printf("Packet length sent: %d, Packet data: %x", len(packet), packet)
+	//log.Printf("Packet successfully sent to client at %s", (*conn).RemoteAddr())
+	//log.Printf("Packet length sent: %d, Packet data: %x", len(packet), packet)
+	return nil
+}
+
+// 룸에 속한(멀티 게임중인) 플레이어들에게 패킷을 전송하는 메소드(클라가 X)
+func (nm *NetworkManager) SendPacketToRoomPlayers(room *Room, message proto.Message) error {
+	packet, err := MakePacket(message)
+
+	if err != nil {
+		return err
+	}
+
+	for _, player := range []*Player{room.Player1, room.Player2} {
+		if player != nil && player.conn != nil {
+			if _, err := (*player.conn).Write(packet); err != nil {
+				log.Printf("Failed to send packet to player %s (%s): %v", player.playerId, (*player.conn).RemoteAddr(), err)
+			} else {
+				log.Printf("Packet sent to player %s at %s", player.playerId, (*player.conn).RemoteAddr())
+			}
+		}
+	}
+
+	log.Printf("SendPacketToRoomPlayers 성공 Packet length sent: %d, Packet data: %x", len(packet), packet)
+
 	return nil
 }
 
 // MakePacket: 길이 정보를 포함한 패킷 생성 및 직렬화된 패킷 반환.
-// Client한테 바로 쏴주는 거 말고 멀티플레이 시 서버에 있는 사용자들에게 쏴주기 위한것
 func MakePacket(message proto.Message) ([]byte, error) {
 	// 메시지 직렬화
 	messageData, err := proto.Marshal(message)
@@ -102,7 +122,22 @@ func MakePacket(message proto.Message) ([]byte, error) {
 	binary.LittleEndian.PutUint32(lengthBuf, uint32(len(messageData)))
 	lengthBuf = append(lengthBuf, messageData...)
 
-	log.Printf("Packet successfully created with length: %d", len(lengthBuf))
+	//log.Printf("Packet successfully created with length: %d", len(lengthBuf))
 
 	return lengthBuf, nil
+}
+
+// Custom Response들..
+
+// SendRoomInfoResponse: RoomInfo 메시지를 생성하고 클라이언트에게 전송
+func (nm *NetworkManager) SendRoomInfoResponse(messageType pb.MessageType, code ResponseCode, conn *net.Conn, message string, room *Room) error {
+	// RoomInfo 포함 응답 메시지 생성
+	builder := NewResponseBuilder(messageType, pb.ResponseCode(Success), message).WithRoomInfo(room)
+	response := builder.Build()
+
+	// 직렬화된 텍스트 메시지 확인용 로그 추가
+	log.Printf("Generated RoomInfo Response: %s", prototext.Format(response))
+
+	// 메시지 전송
+	return nm.SendPacketToClient(conn, response)
 }

@@ -9,6 +9,13 @@ import "playerInfo.proto"; // PlayerState 메시지를 가져오기 위한 임�
 // 룸 정보 메시지
 message RoomInfo {
     string roomId = 1;  // 룸 ID. 참여하는 playerId들이 붙어있음
-    playerInfo.PlayerInfo player1Info = 2; // 첫 번째 플레이어 상태
-    playerInfo.PlayerInfo player2Info = 3; // 두 번째 플레이어 상태
+    repeated playerInfo.PlayerInfo players = 2; // 다수의 플레이어 정보를 위한 리스트
+    // playerInfo.PlayerInfo player1Info = 2; // 첫 번째 플레이어 상태
+    // playerInfo.PlayerInfo player2Info = 3; // 두 번째 플레이어 상태
+}
+
+// 특정 플레이어 정보와 룸 ID를 함께 보내는 요청
+message RoomPlayerUpdate {
+    string roomId = 1;  // 룸 ID
+    playerInfo.PlayerInfo playerInfo = 2; // 개별 플레이어 정보
 }

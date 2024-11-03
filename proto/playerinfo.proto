@@ -4,6 +4,13 @@ package playerInfo;
 
 option go_package = "server-go/src/pb";
 
+// 프리팹 타입 정의 (딱 2가지 타입)
+enum PrefabType {
+    TYPE_UNDEFINED = 0; // 기본값 (정의되지 않은 경우)
+    TYPE_A = 1;         // 첫 번째 프리팹 타입
+    TYPE_B = 2;         // 두 번째 프리팹 타입
+}
+
 // 요청, 응답으로 사용할 플레이어의 정보
 message PlayerInfo {
     string playerId = 1;  // 플레이어의 고유 ID
@@ -15,4 +22,5 @@ message PlayerInfo {
     float rz = 7; // Z 축 회전
     float speed = 8;      // 플레이어 속도
     float health = 9; // 플레이어 체력
+    // PrefabType prefabType = 10; // 추후 플레이어 캐릭터 생성시 정해져야함. 플레이어의 프리팹 타입
 }

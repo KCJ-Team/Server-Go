@@ -20,6 +20,56 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// 프리팹 타입 정의 (딱 2가지 타입)
+type PrefabType int32
+
+const (
+	PrefabType_TYPE_UNDEFINED PrefabType = 0 // 기본값 (정의되지 않은 경우)
+	PrefabType_TYPE_A         PrefabType = 1 // 첫 번째 프리팹 타입
+	PrefabType_TYPE_B         PrefabType = 2 // 두 번째 프리팹 타입
+)
+
+// Enum value maps for PrefabType.
+var (
+	PrefabType_name = map[int32]string{
+		0: "TYPE_UNDEFINED",
+		1: "TYPE_A",
+		2: "TYPE_B",
+	}
+	PrefabType_value = map[string]int32{
+		"TYPE_UNDEFINED": 0,
+		"TYPE_A":         1,
+		"TYPE_B":         2,
+	}
+)
+
+func (x PrefabType) Enum() *PrefabType {
+	p := new(PrefabType)
+	*p = x
+	return p
+}
+
+func (x PrefabType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PrefabType) Descriptor() protoreflect.EnumDescriptor {
+	return file_playerInfo_proto_enumTypes[0].Descriptor()
+}
+
+func (PrefabType) Type() protoreflect.EnumType {
+	return &file_playerInfo_proto_enumTypes[0]
+}
+
+func (x PrefabType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PrefabType.Descriptor instead.
+func (PrefabType) EnumDescriptor() ([]byte, []int) {
+	return file_playerInfo_proto_rawDescGZIP(), []int{0}
+}
+
 // 요청, 응답으로 사용할 플레이어의 정보
 type PlayerInfo struct {
 	state         protoimpl.MessageState
@@ -146,8 +196,12 @@ var file_playerInfo_proto_rawDesc = []byte{
 	0x02, 0x72, 0x7a, 0x12, 0x14, 0x0a, 0x05, 0x73, 0x70, 0x65, 0x65, 0x64, 0x18, 0x08, 0x20, 0x01,
 	0x28, 0x02, 0x52, 0x05, 0x73, 0x70, 0x65, 0x65, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x68, 0x65, 0x61,
 	0x6c, 0x74, 0x68, 0x18, 0x09, 0x20, 0x01, 0x28, 0x02, 0x52, 0x06, 0x68, 0x65, 0x61, 0x6c, 0x74,
-	0x68, 0x42, 0x12, 0x5a, 0x10, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2d, 0x67, 0x6f, 0x2f, 0x73,
-	0x72, 0x63, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x68, 0x2a, 0x38, 0x0a, 0x0a, 0x50, 0x72, 0x65, 0x66, 0x61, 0x62, 0x54, 0x79, 0x70, 0x65, 0x12,
+	0x12, 0x0a, 0x0e, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x55, 0x4e, 0x44, 0x45, 0x46, 0x49, 0x4e, 0x45,
+	0x44, 0x10, 0x00, 0x12, 0x0a, 0x0a, 0x06, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x41, 0x10, 0x01, 0x12,
+	0x0a, 0x0a, 0x06, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x42, 0x10, 0x02, 0x42, 0x12, 0x5a, 0x10, 0x73,
+	0x65, 0x72, 0x76, 0x65, 0x72, 0x2d, 0x67, 0x6f, 0x2f, 0x73, 0x72, 0x63, 0x2f, 0x70, 0x62, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -162,9 +216,11 @@ func file_playerInfo_proto_rawDescGZIP() []byte {
 	return file_playerInfo_proto_rawDescData
 }
 
+var file_playerInfo_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_playerInfo_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_playerInfo_proto_goTypes = []any{
-	(*PlayerInfo)(nil), // 0: playerInfo.PlayerInfo
+	(PrefabType)(0),    // 0: playerInfo.PrefabType
+	(*PlayerInfo)(nil), // 1: playerInfo.PlayerInfo
 }
 var file_playerInfo_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -184,13 +240,14 @@ func file_playerInfo_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_playerInfo_proto_rawDesc,
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_playerInfo_proto_goTypes,
 		DependencyIndexes: file_playerInfo_proto_depIdxs,
+		EnumInfos:         file_playerInfo_proto_enumTypes,
 		MessageInfos:      file_playerInfo_proto_msgTypes,
 	}.Build()
 	File_playerInfo_proto = out.File

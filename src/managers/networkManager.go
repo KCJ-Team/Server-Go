@@ -93,7 +93,7 @@ func (nm *NetworkManager) SendPacketToRoomPlayers(room *Room, message proto.Mess
 		return err
 	}
 
-	for _, player := range []*Player{room.Player1, room.Player2} {
+	for _, player := range room.Players {
 		if player != nil && player.conn != nil {
 			if _, err := (*player.conn).Write(packet); err != nil {
 				log.Printf("Failed to send packet to player %s (%s): %v", player.playerId, (*player.conn).RemoteAddr(), err)
@@ -132,11 +132,24 @@ func MakePacket(message proto.Message) ([]byte, error) {
 // SendRoomInfoResponse: RoomInfo 메시지를 생성하고 클라이언트에게 전송
 func (nm *NetworkManager) SendRoomInfoResponse(messageType pb.MessageType, code ResponseCode, conn *net.Conn, message string, room *Room) error {
 	// RoomInfo 포함 응답 메시지 생성
-	builder := NewResponseBuilder(messageType, pb.ResponseCode(Success), message).WithRoomInfo(room)
+	builder := NewResponseBuilder(messageType, pb.ResponseCode(code), message).WithRoomInfo(room)
 	response := builder.Build()
 
 	// 직렬화된 텍스트 메시지 확인용 로그 추가
 	log.Printf("Generated RoomInfo Response: %s", prototext.Format(response))
+
+	// 메시지 전송
+	return nm.SendPacketToClient(conn, response)
+}
+
+// SendRoomPlayerUpdateResponse: RoomPlayerUpdate 메시지를 생성하고 클라이언트에게 전송
+func (nm *NetworkManager) SendRoomPlayerUpdateResponse(messageType pb.MessageType, code ResponseCode, conn *net.Conn, message string, roomId string, player *Player) error {
+	// RoomPlayerUpdate 포함 응답 메시지 생성
+	builder := NewResponseBuilder(messageType, pb.ResponseCode(code), message).WithRoomPlayerUpdate(roomId, player)
+	response := builder.Build()
+
+	// 직렬화된 텍스트 메시지 확인용 로그 추가
+	log.Printf("Generated RoomPlayerUpdate Response: %s", prototext.Format(response))
 
 	// 메시지 전송
 	return nm.SendPacketToClient(conn, response)

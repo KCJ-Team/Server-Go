@@ -28,5 +28,6 @@ message GameMessage {
         playerInfo.PlayerInfo playerInfo = 2;
         messages.Response response = 3;
         roomInfo.RoomInfo roomInfo = 4;
+        roomInfo.RoomPlayerUpdate roomPlayerUpdate = 5;
     }
 }

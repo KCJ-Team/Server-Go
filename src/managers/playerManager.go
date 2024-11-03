@@ -13,7 +13,7 @@ import (
 var playerManager *PlayerManager
 
 // Player: 개별 플레이어의 정보를 담는 구조체
-type Player struct { // DB에는 기본복수형으로 players 라는 테이블로 매핑이된다.
+type Player struct {
 	playerId string    // guid
 	conn     *net.Conn // 플레이어의 네트워크 연결
 	x        float32   // 플레이어의 X 좌표
@@ -57,9 +57,15 @@ func (pm *PlayerManager) Login(playerId string, conn *net.Conn) *Player {
 	}
 
 	// playerId가 세션에 없다면 새로운 플레이어 생성 및 세션에 추가
+	// 여기에서 기본 플레이어 값을 세팅한다.
 	newPlayer := &Player{
 		playerId: playerId,
 		conn:     conn,
+		x:        0,
+		y:        0,
+		z:        0,
+		speed:    5,
+		health:   100,
 	}
 
 	pm.players[playerId] = newPlayer // 세션 맵에 새 플레이어 추가

@@ -4,7 +4,7 @@ package roomInfo;
 
 option go_package = "server-go/src/pb";
 
-import "playerInfo.proto"; // PlayerState 메시지를 가져오기 위한 임포트
+import "playerInfo.proto"; // 플레이어 메시지를 가져오기 위한 임포트
 
 // 룸 정보 메시지
 message RoomInfo {

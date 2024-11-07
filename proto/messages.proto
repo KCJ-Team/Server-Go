@@ -18,6 +18,9 @@ enum MessageType {
     PLAYER_POSITION_UPDATE = 4; // 플레이어 위치 업데이트 요청
     MATCHMAKING_START = 5; // 매치 시작
     MATCHMAKING_CANCEL = 6; // 매치 취소
+    PLAYER_HP_UPDATE = 7; // 플레이어 hp 변경시
+    PLAYER_CHANGE_WEAPON = 8; // 플레이어 무기 변경시 요청
+    PLAYER_ANIMATION = 9; // 플레이어 애니메이션 파라미터값 변경시
 }
 
 // 모든 최종 타입은 GameMessage 타입

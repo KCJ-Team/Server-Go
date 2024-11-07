@@ -12,18 +12,31 @@ import (
 // playerManager 전역 변수로 PlayerManager 싱글톤 패턴 구현
 var playerManager *PlayerManager
 
+// AnimationParm
+type AnimationParameters struct {
+	isRunning  float32
+	isAim      bool
+	movementX  float32
+	movementY  float32
+	weaponType int32
+}
+
 // Player: 개별 플레이어의 정보를 담는 구조체
 type Player struct {
-	playerId string    // guid
-	conn     *net.Conn // 플레이어의 네트워크 연결
-	x        float32   // 플레이어의 X 좌표
-	y        float32   // 플레이어의 Y 좌표
-	z        float32   // 플레이어의 Z 좌표
-	rx       float32   // X 축 회전
-	ry       float32   // Y 축 회전
-	rz       float32   // Z 축 회전
-	speed    float32   // 이동 속도
-	health   float32   // 체력
+	playerId      string    // guid
+	conn          *net.Conn // 플레이어의 네트워크 연결
+	x             float32   // 플레이어의 X 좌표
+	y             float32   // 플레이어의 Y 좌표
+	z             float32   // 플레이어의 Z 좌표
+	rx            float32   // X 축 회전
+	ry            float32   // Y 축 회전
+	rz            float32   // Z 축 회전
+	speed         float32   // 이동 속도
+	hp            float32   // 체력
+	rotationSpeed float32   // 회전 속도
+	modelType     pb.PlayerModelType
+	weaponType    pb.PlayerWeaponType
+	animParams    AnimationParameters
 }
 
 // PlayerManager: 플레이어 목록을 관리하고, ID를 자동 할당하는 구조체
@@ -58,6 +71,7 @@ func (pm *PlayerManager) Login(playerId string, conn *net.Conn) *Player {
 
 	// playerId가 세션에 없다면 새로운 플레이어 생성 및 세션에 추가
 	// 여기에서 기본 플레이어 값을 세팅한다.
+	// TODO : 프리팹타입, 무기프리팹을 받아야한다.
 	newPlayer := &Player{
 		playerId: playerId,
 		conn:     conn,
@@ -65,7 +79,7 @@ func (pm *PlayerManager) Login(playerId string, conn *net.Conn) *Player {
 		y:        0,
 		z:        0,
 		speed:    5,
-		health:   100,
+		hp:       100,
 	}
 
 	pm.players[playerId] = newPlayer // 세션 맵에 새 플레이어 추가

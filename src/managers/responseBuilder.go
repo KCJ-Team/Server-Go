@@ -44,7 +44,7 @@ func (rb *ResponseBuilder) WithRoomInfo(room *Room) *ResponseBuilder {
 				Ry:       player.ry,
 				Rz:       player.rz,
 				Speed:    player.speed,
-				Health:   player.health,
+				Hp:       player.hp,
 				// PrefabType: player.prefabType, // prefabType이 있다면 추가
 			}
 			roomInfo.Players = append(roomInfo.Players, playerInfo)
@@ -69,7 +69,7 @@ func (rb *ResponseBuilder) WithRoomPlayerUpdate(roomId string, player *Player) *
 			Ry:       player.ry,
 			Rz:       player.rz,
 			Speed:    player.speed,
-			Health:   player.health,
+			Hp:       player.hp,
 			// PrefabType: player.prefabType, // prefabType이 있다면 추가
 		},
 	}

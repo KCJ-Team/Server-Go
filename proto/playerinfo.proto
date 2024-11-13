@@ -4,15 +4,44 @@ package playerInfo;
 
 option go_package = "server-go/src/pb";
 
+// 플레이어 모델 프리팹 타입 정의 (딱 2가지 타입)
+enum PlayerModelType {
+    MODEL_UNDEFINED = 0; // 기본값 (정의되지 않은 경우)
+    MALE = 1;            // 남캐 프리팹 타입
+    FEMALE = 2;          // 여캐 프리팹 타입
+}
+
+// 플레이어 무기 프리팹 타입 정의
+enum PlayerWeaponType {
+    WEAPON_UNDEFINED = 0; // 기본값
+    PISTOL = 1;           // 권총
+    ASSAULT = 2;          // 자동소총
+    SNIPER = 3;           // 저격소총
+    SHOTGUN = 4;          // 샷건
+}
+
+// 플레이어 애니메이션 파라미터 정의
+message AnimationParameters {
+    float isRunning = 1;
+    bool isAim = 2;
+    float movementX = 3;
+    float movementY = 4;
+    int32 weaponType = 5;
+}
+
 // 요청, 응답으로 사용할 플레이어의 정보
 message PlayerInfo {
-    string playerId = 1;  // 플레이어의 고유 ID
-    float x = 2;          // X 좌표
-    float y = 3;          // Y 좌표
-    float z = 4;          // Z 좌표
-    float rx = 5; // X 축 회전
-    float ry = 6; // Y 축 회전
-    float rz = 7; // Z 축 회전
-    float speed = 8;      // 플레이어 속도
-    float health = 9; // 플레이어 체력
+    string playerId = 1;            // 플레이어의 고유 ID
+    float x = 2;                    // X 좌표
+    float y = 3;                    // Y 좌표
+    float z = 4;                    // Z 좌표
+    float rx = 5;                   // X 축 회전
+    float ry = 6;                   // Y 축 회전
+    float rz = 7;                   // Z 축 회전
+    float speed = 8;                // 플레이어 속도
+    float hp = 9;                   // 플레이어 체력
+    float rotationSpeed = 10;       // 플레이어 회전속도
+    PlayerModelType prefabModelType = 11;   // 플레이어의 프리팹 타입
+    PlayerWeaponType prefabWeaponType = 12; // 무기 프리팹 타입
+    AnimationParameters animParams = 13;    // 애니메이션 파라미터들
 }

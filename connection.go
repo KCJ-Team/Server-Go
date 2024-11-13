@@ -75,6 +75,19 @@ func processMessage(message *pb.GameMessage, conn net.Conn) {
 		case pb.MessageType_MATCHMAKING_CANCEL:
 			mg.GetMatchmakingManager().CancelMatchmaking(playerInfo.PlayerId)
 		}
+	case *pb.GameMessage_RoomPlayerUpdate:
+		roomUpdate := msg.RoomPlayerUpdate
+
+		switch message.MessageType {
+		case pb.MessageType_PLAYER_POSITION_UPDATE:
+			mg.GetRoomManager().UpdatePlayerPositionInRoom(roomUpdate)
+		case pb.MessageType_PLAYER_HP_UPDATE:
+			mg.GetRoomManager().UpdatePlayerHpInRoom(roomUpdate)
+		case pb.MessageType_PLAYER_CHANGE_WEAPON:
+			mg.GetRoomManager().ChangePlayerWeaponType(roomUpdate)
+		case pb.MessageType_PLAYER_ANIMATION:
+			mg.GetRoomManager().UpdatePlayerAnimationParam(roomUpdate)
+		}
 	default:
 		log.Printf("Unexpected message type: %T", msg)
 	}
